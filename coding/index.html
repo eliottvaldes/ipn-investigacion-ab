@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload and Processing</title>
+    <script src="https://unpkg.com/vue@3.2.37/dist/vue.global.js"></script>
+    <style>
+        /* Centrar todo el contenido del body */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div v-if="!imageLoaded">
+            <form @submit.prevent>
+                <input type="file" @change="handleFileUpload" accept="image/*" />
+                <p v-if="imageUrl">Imagen cargada</p>
+                <button v-if="imageUrl" @click.prevent="clearImage">Subir otro archivo</button>
+                <button v-if="imageUrl" @click.prevent="acceptImage">Aceptar</button>
+            </form>
+        </div>
+
+        <div v-if="imageLoaded && !cropping">
+            <div>
+                <img :src="displayedImage" alt="Uploaded Image" style="max-width: 100%; max-height: 500px;" />
+            </div>
+            <div>
+                <ul>
+                    <li><button v-if="croppedImage" @click="resetImage">Reestablecer</button></li>
+                    <li><button @click="enableCrop">Recortar</button></li>
+                    <li>
+                        Ajustar parámetros
+                        <input type="range" v-model="rangeValue" min="1" max="100">
+                    </li>
+                    <li><button @click="processImage">Procesar</button></li>
+                </ul>
+            </div>
+        </div>
+
+        <div v-if="cropping">
+            <p>Seleccione el área a recortar arrastrando sobre la imagen y luego haga clic en "Aceptar cambios".</p>
+            <div @mousedown="startCrop" @mouseup="endCrop" @mousemove="cropImage" style="position: relative;">
+                <img :src="imageUrl" alt="Image to crop" ref="image" style="max-width: 100%; max-height: 500px;">
+                <div v-if="cropBox" :style="cropBoxStyle" style="border: 2px dashed red; position: absolute;"></div>
+            </div>
+            <button v-if="cropBox" @click="applyCrop">Aceptar cambios</button>
+            <button @click="cancelCrop">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    imageUrl: '',
+                    imageLoaded: false,
+                    cropping: false,
+                    originalImage: null,
+                    croppedImage: null,
+                    cropBox: null,
+                    rangeValue: 50,
+                    isDragging: false,
+                };
+            },
+            computed: {
+                displayedImage() {
+                    return this.croppedImage || this.imageUrl;
+                },
+                cropBoxStyle() {
+                    if (!this.cropBox) return {};
+                    return {
+                        left: Math.min(this.cropBox.startX, this.cropBox.endX) + 'px',
+                        top: Math.min(this.cropBox.startY, this.cropBox.endY) + 'px',
+                        width: Math.abs(this.cropBox.endX - this.cropBox.startX) + 'px',
+                        height: Math.abs(this.cropBox.endY - this.cropBox.startY) + 'px',
+                    };
+                }
+            },
+            methods: {
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.imageUrl = URL.createObjectURL(file);
+                        this.originalImage = file;
+                    }
+                },
+                clearImage() {
+                    this.imageUrl = '';
+                    this.imageLoaded = false;
+                    this.croppedImage = null;
+                },
+                acceptImage() {
+                    this.imageLoaded = true;
+                },
+                resetImage() {
+                    this.croppedImage = null;
+                },
+                enableCrop() {
+                    this.cropping = true;
+                    this.cropBox = null;
+                },
+                startCrop(event) {
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    this.isDragging = true;
+                    const rect = this.$refs.image.getBoundingClientRect();
+                    this.cropBox = {
+                        startX: event.clientX - rect.left,
+                        startY: event.clientY - rect.top,
+                        endX: event.clientX - rect.left,
+                        endY: event.clientY - rect.top,
+                    };
+                },
+                cropImage(event) {
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    if (this.isDragging) {
+                        const rect = this.$refs.image.getBoundingClientRect();
+                        this.cropBox.endX = event.clientX - rect.left;
+                        this.cropBox.endY = event.clientY - rect.top;
+                    }
+                },
+                endCrop(event) {
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    this.isDragging = false;
+                },
+                applyCrop() {
+                    if (!this.cropBox) return;
+
+                    const img = this.$refs.image;
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const scaleFactor = img.naturalWidth / img.width;
+
+                    const cropX = Math.min(this.cropBox.startX, this.cropBox.endX) * scaleFactor;
+                    const cropY = Math.min(this.cropBox.startY, this.cropBox.endY) * scaleFactor;
+                    const cropWidth = Math.abs(this.cropBox.endX - this.cropBox.startX) * scaleFactor;
+                    const cropHeight = Math.abs(this.cropBox.endY - this.cropBox.startY) * scaleFactor;
+
+                    canvas.width = cropWidth;
+                    canvas.height = cropHeight;
+
+                    ctx.drawImage(
+                        img,
+                        cropX,
+                        cropY,
+                        cropWidth,
+                        cropHeight,
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+
+                    this.croppedImage = canvas.toDataURL();
+                    this.cropBox = null;
+                    this.cropping = false;
+                },
+                cancelCrop() {
+                    this.cropBox = null;
+                    this.cropping = false;
+                },
+                processImage() {
+                    alert(`Valor del rango: ${this.rangeValue}\nImagen procesada: ${this.displayedImage}`);
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+
+
+
+</html>

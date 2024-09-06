@@ -2,8 +2,11 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
     <title>Image Upload and Processing</title>
     <script src="https://unpkg.com/vue@3.2.37/dist/vue.global.js"></script>
     <style>
@@ -18,7 +21,9 @@
     </style>
 </head>
 
-<body>
+<body class="container p-3">
+
+
     <div id="app">
         <div v-if="!imageLoaded">
             <form @submit.prevent>
@@ -48,7 +53,8 @@
 
         <div v-if="cropping">
             <p>Seleccione el área a recortar arrastrando sobre la imagen y luego haga clic en "Aceptar cambios".</p>
-            <div @mousedown="startCrop" @mouseup="endCrop" @mousemove="cropImage" style="position: relative;">
+            <div @mousedown="startCrop" @mousemove="cropImage" @mouseup="endCrop" @touchstart="startCropTouch"
+                @touchmove="cropImageTouch" @touchend="endCropTouch" style="position: relative;">
                 <img :src="imageUrl" alt="Image to crop" ref="image" style="max-width: 100%; max-height: 500px;">
                 <div v-if="cropBox" :style="cropBoxStyle" style="border: 2px dashed red; position: absolute;"></div>
             </div>
@@ -108,42 +114,54 @@
                     this.cropping = true;
                     this.cropBox = null;
                 },
-                getEventPosition(event) {
-                    let clientX, clientY;
-                    if (event.touches) {
-                        // Si es un evento táctil
-                        clientX = event.touches[0].clientX;
-                        clientY = event.touches[0].clientY;
-                    } else {
-                        // Si es un evento de ratón
-                        clientX = event.clientX;
-                        clientY = event.clientY;
-                    }
-                    return { clientX, clientY };
-                },
+                // Eventos para escritorio
                 startCrop(event) {
-                    event.preventDefault(); // Prevenir comportamiento predeterminado (ej. mover la página)
-                    const { clientX, clientY } = this.getEventPosition(event);
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
                     this.isDragging = true;
                     const rect = this.$refs.image.getBoundingClientRect();
                     this.cropBox = {
-                        startX: clientX - rect.left,
-                        startY: clientY - rect.top,
-                        endX: clientX - rect.left,
-                        endY: clientY - rect.top,
+                        startX: event.clientX - rect.left,
+                        startY: event.clientY - rect.top,
+                        endX: event.clientX - rect.left,
+                        endY: event.clientY - rect.top,
                     };
                 },
                 cropImage(event) {
-                    event.preventDefault(); // Prevenir comportamiento predeterminado
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
                     if (this.isDragging) {
-                        const { clientX, clientY } = this.getEventPosition(event);
                         const rect = this.$refs.image.getBoundingClientRect();
-                        this.cropBox.endX = clientX - rect.left;
-                        this.cropBox.endY = clientY - rect.top;
+                        this.cropBox.endX = event.clientX - rect.left;
+                        this.cropBox.endY = event.clientY - rect.top;
                     }
                 },
                 endCrop(event) {
-                    event.preventDefault(); // Prevenir comportamiento predeterminado
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    this.isDragging = false;
+                },
+                // Eventos para dispositivos móviles
+                startCropTouch(event) {
+                    event.preventDefault();
+                    const touch = event.touches[0];
+                    const rect = this.$refs.image.getBoundingClientRect();
+                    this.isDragging = true;
+                    this.cropBox = {
+                        startX: touch.clientX - rect.left,
+                        startY: touch.clientY - rect.top,
+                        endX: touch.clientX - rect.left,
+                        endY: touch.clientY - rect.top,
+                    };
+                },
+                cropImageTouch(event) {
+                    event.preventDefault();
+                    if (this.isDragging) {
+                        const touch = event.touches[0];
+                        const rect = this.$refs.image.getBoundingClientRect();
+                        this.cropBox.endX = touch.clientX - rect.left;
+                        this.cropBox.endY = touch.clientY - rect.top;
+                    }
+                },
+                endCropTouch(event) {
+                    event.preventDefault();
                     this.isDragging = false;
                 },
                 applyCrop() {
@@ -191,7 +209,5 @@
         app.mount('#app');
     </script>
 </body>
-
-
 
 </html>

@@ -108,27 +108,42 @@
                     this.cropping = true;
                     this.cropBox = null;
                 },
+                getEventPosition(event) {
+                    let clientX, clientY;
+                    if (event.touches) {
+                        // Si es un evento táctil
+                        clientX = event.touches[0].clientX;
+                        clientY = event.touches[0].clientY;
+                    } else {
+                        // Si es un evento de ratón
+                        clientX = event.clientX;
+                        clientY = event.clientY;
+                    }
+                    return { clientX, clientY };
+                },
                 startCrop(event) {
-                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    event.preventDefault(); // Prevenir comportamiento predeterminado (ej. mover la página)
+                    const { clientX, clientY } = this.getEventPosition(event);
                     this.isDragging = true;
                     const rect = this.$refs.image.getBoundingClientRect();
                     this.cropBox = {
-                        startX: event.clientX - rect.left,
-                        startY: event.clientY - rect.top,
-                        endX: event.clientX - rect.left,
-                        endY: event.clientY - rect.top,
+                        startX: clientX - rect.left,
+                        startY: clientY - rect.top,
+                        endX: clientX - rect.left,
+                        endY: clientY - rect.top,
                     };
                 },
                 cropImage(event) {
-                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    event.preventDefault(); // Prevenir comportamiento predeterminado
                     if (this.isDragging) {
+                        const { clientX, clientY } = this.getEventPosition(event);
                         const rect = this.$refs.image.getBoundingClientRect();
-                        this.cropBox.endX = event.clientX - rect.left;
-                        this.cropBox.endY = event.clientY - rect.top;
+                        this.cropBox.endX = clientX - rect.left;
+                        this.cropBox.endY = clientY - rect.top;
                     }
                 },
                 endCrop(event) {
-                    event.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+                    event.preventDefault(); // Prevenir comportamiento predeterminado
                     this.isDragging = false;
                 },
                 applyCrop() {

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # CONFIGURACIÓN
 # =============================================================================
 # Constantes para PSO
-NUM_PARTICLES = 30
+NUM_PARTICLES = 250
 NUM_DIMENSIONS = 2
 VARIABLE_RANGES = np.array([[1, 10], [0, 1]])  # Rangos para alpha y delta
 COGNITIVE_PARAMETER = 1.6322
@@ -154,7 +154,7 @@ def local_pso(img):
                 break
         
         # Mostrar mejor evaluación de la generación    
-        print(f'\tMejor entropía local: {np.max(personal_best_evaluations):.6f} \tMejor entropía global: {np.max(evaluations):.6f}')
+        print(f'\tMejor entropía global: {np.max(personal_best_evaluations):.6f} \tMejor entropía local: {np.max(evaluations):.6f}')
         # mostrar alpha y delta de la mejor particula
         print(f'\tAlpha: {personal_best_positions[np.argmax(personal_best_evaluations)][0]:.6f} \tDelta: {personal_best_positions[np.argmax(personal_best_evaluations)][1]:.6f}')
         

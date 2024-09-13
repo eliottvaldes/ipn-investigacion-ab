@@ -222,7 +222,7 @@ def main(image_path):
 
     ax2 = plt.subplot(1, 2, 2)
     ax2.imshow(output_image)
-    ax2.set_title(f'Imagen Procesada\nEntropía Shannon: {output_entropy:.6f}')
+    ax2.set_title(f'Imagen Procesada\nEntropía Shannon: {output_entropy:.6f}' + f'\nAlpha: {optimized_alpha:.6f} Delta: {optimized_delta:.6f}')
     ax2.axis('off')
 
     plt.tight_layout()

@@ -235,5 +235,7 @@ def main(image_path):
     
 
 if __name__ == '__main__':
-    image_path = '../files/02_pintura_techo_c.png'
-    main(image_path)
+    main_path = '../files/'
+    file_folder = 'random/'    
+    file_name = '02_pintura_techo_c.png
+    main(main_path + file_folder + file_name)
